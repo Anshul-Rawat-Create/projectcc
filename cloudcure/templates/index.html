@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="alert-box {{ 'alert' if alert.status == 'ALERT' else 'safe' }}">
+    <h2>{{ alert.message }}</h2>
+    {% if alert.status == 'ALERT' %}
+        <p>🚨 Boil drinking water, avoid outside food, and visit a health center immediately.</p>
+    {% endif %}
+</div>
+{% endblock %}

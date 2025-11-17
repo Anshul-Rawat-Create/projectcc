@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>🏥 Health Authority Dashboard</h2>
+
+<div class="alert-box {{ 'alert' if alert.status == 'ALERT' else 'safe' }}">
+    <h3>{{ alert.message }}</h3>
+</div>
+
+<h3>📍 Disease Cases by Location</h3>
+<div class="location-cards">
+    {% for location, diseases in location_diseases.items() %}
+    <div class="location-card">
+        <h4>{{ location }} ({{ diseases|length }} case{{ 's' if diseases|length != 1 else '' }})</h4>
+        <ul class="disease-list">
+            {% for disease in diseases %}
+            <li>{{ disease|title }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

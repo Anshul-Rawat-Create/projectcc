@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>🏥 Hospital Staff Signup</h2>
+<form method="POST">
+  <p><label>Hospital Name: <input name="hospital_name" required></label></p>
+  <p><label>Email: <input type="email" name="email" required></label></p>
+  <p><label>Password (min 6 chars): <input type="password" name="password" required minlength="6"></label></p>
+  <button type="submit">Create Account</button>
+</form>
+<p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+{% endblock %}

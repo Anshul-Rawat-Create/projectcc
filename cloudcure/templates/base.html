@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}CloudCure Alert{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>💧 CloudCure Alert</h1>
+        <nav>
+            <a href="/">Public Alert</a> |
+            <a href="/dashboard">Dashboard</a>
+            {% if current_user.is_authenticated %}
+                | <a href="/report">Report Case</a>
+                | <a href="/logout">Logout ({{ current_user.hospital_name }})</a>
+            {% else %}
+                | <a href="/login">Hospital Login</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, msg in messages %}
+                    <div class="flash {{ 'error' if category == 'error' else 'success' if category == 'success' else 'info' }}">
+                        {{ msg }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>Smart Community Health Monitoring System | Team CloudCure Alert</p>
+    </footer>
+</body>
+</html>

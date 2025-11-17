@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📤 Submit New Water-Borne Disease Report</h2>
+<form method="POST">
+  <p><label>Patient ID: <input type="text" name="patient_id" required></label></p>
+  <p><label>Disease: <input type="text" name="disease" placeholder="e.g., cholera, typhoid" required></label></p>
+  <p><label>Location: <input type="text" name="location" placeholder="e.g., Ahmedabad-Ward5" required></label></p>
+  <p><label>Days ago symptoms started: <input type="number" name="days_ago" min="0" max="30" value="0" required></label></p>
+  <button type="submit">Submit Report</button>
+</form>
+{% endblock %}
