@@ -1,12 +1,15 @@
 from models import db, DiseaseReport
 
-def add_disease_report(patient_id, disease, location, days_ago):
+def add_disease_report(patient_id, disease, location, days_ago, notes=None, hospital_id=None):
     report = DiseaseReport(
         patient_id=patient_id,
         disease=disease.lower().strip(),
         location=location.strip(),
-        days_ago=int(days_ago)
+        days_ago=int(days_ago),
+        hospital_id=hospital_id  # ← NEW
     )
+    if notes is not None:
+        report.set_encrypted_notes(notes)
     db.session.add(report)
     db.session.commit()
     return report

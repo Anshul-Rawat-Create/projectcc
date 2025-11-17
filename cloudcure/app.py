@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, HospitalUser
+from models import db, HospitalUser, DiseaseReport
 from db_utils import add_disease_report, get_reports_grouped_by_location, get_recent_reports
 import pandas as pd
 import os
@@ -8,24 +8,22 @@ import os
 def create_app():
     app = Flask(__name__)
     
-    # 🔑 Secret key (keep this secure in production)
-    app.config['SECRET_KEY'] = 'cloudcure-secret-key'
+    # Secret key
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'cloudcure-secret-key'
     
-    # ☁️ Use cloud database if DATABASE_URL is set, otherwise fallback to SQLite (for testing)
+    # Database: cloud if DATABASE_URL set, else local SQLite
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
-        # Fix Supabase's "postgres://" → SQLAlchemy requires "postgresql://"
         if DATABASE_URL.startswith("postgres://"):
             DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     else:
-        # Local fallback (not used when deployed or when env var is set)
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_monitor.db'
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
     
-    # 🔐 Flask-Login setup
+    # Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'login'
@@ -34,7 +32,6 @@ def create_app():
     def load_user(user_id):
         return HospitalUser.query.get(int(user_id))
 
-    # 🗃️ Create tables in the database (safe to run multiple times)
     with app.app_context():
         db.create_all()
 
@@ -63,22 +60,19 @@ def detect_outbreak(threshold=7):
         }
     return {"status": "SAFE", "message": "No unusual activity detected."}
 
-# === AUTH ROUTES ===
+# === ROUTES ===
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
         hospital = request.form.get('hospital_name', '').strip()
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-        
         if not (hospital and email and password):
             flash("All fields are required.", "error")
             return render_template('signup.html')
-        
         if HospitalUser.query.filter_by(email=email).first():
             flash("Email already registered.", "error")
             return render_template('signup.html')
-        
         user = HospitalUser(hospital_name=hospital, email=email)
         user.set_password(password)
         db.session.add(user)
@@ -93,7 +87,6 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         user = HospitalUser.query.filter_by(email=email).first()
-        
         if user and user.check_password(password):
             login_user(user)
             flash(f"Welcome, {user.hospital_name}!", "success")
@@ -110,7 +103,6 @@ def logout():
     flash("You have been logged out.", "info")
     return redirect(url_for('home'))
 
-# === PUBLIC ROUTES ===
 @app.route('/')
 def home():
     return render_template('index.html', alert=detect_outbreak())
@@ -118,9 +110,11 @@ def home():
 @app.route('/dashboard')
 def dashboard():
     location_diseases = get_reports_grouped_by_location()
-    return render_template('dashboard.html', location_diseases=location_diseases, alert=detect_outbreak())
+    all_reports = DiseaseReport.query.all()  # For showing decrypted notes
+    return render_template('dashboard.html', location_diseases=location_diseases, all_reports=all_reports, alert=detect_outbreak())
 
-# === PROTECTED ROUTE ===
+# In app.py, inside /report route
+
 @app.route('/report', methods=['GET', 'POST'])
 @login_required
 def report_case():
@@ -129,11 +123,21 @@ def report_case():
         dis = request.form.get('disease', '').strip()
         loc = request.form.get('location', '').strip()
         days = request.form.get('days_ago', '0').strip()
+        notes = request.form.get('notes', '').strip()  # New field
+
         if not (pid and dis and loc):
             flash("All fields are required!", "error")
             return render_template('report_form.html')
+
         try:
-            add_disease_report(pid, dis, loc, days)
+            add_disease_report(
+                pid, 
+                dis, 
+                loc, 
+                days, 
+                notes if notes else None,  # Pass notes if exists
+                current_user.id             # Pass hospital ID
+            )
             flash(f"✅ Case of '{dis.title()}' reported in {loc}!", "success")
             return redirect(url_for('dashboard'))
         except Exception as e:

@@ -1,11 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>📤 Submit New Water-Borne Disease Report</h2>
+
 <form method="POST">
-  <p><label>Patient ID: <input type="text" name="patient_id" required></label></p>
-  <p><label>Disease: <input type="text" name="disease" placeholder="e.g., cholera, typhoid" required></label></p>
-  <p><label>Location: <input type="text" name="location" placeholder="e.g., Ahmedabad-Ward5" required></label></p>
-  <p><label>Days ago symptoms started: <input type="number" name="days_ago" min="0" max="30" value="0" required></label></p>
+  <p>
+    <label for="patient_id">Patient ID:</label><br>
+    <input type="text" id="patient_id" name="patient_id" required>
+  </p>
+
+  <p>
+    <label for="disease">Disease:</label><br>
+    <input type="text" id="disease" name="disease" placeholder="e.g., cholera, typhoid" required>
+  </p>
+
+  <p>
+    <label for="location">Location:</label><br>
+    <input type="text" id="location" name="location" placeholder="e.g., Ahmedabad-Ward5" required>
+  </p>
+
+  <p>
+    <label for="days_ago">Days ago symptoms started:</label><br>
+    <input type="number" id="days_ago" name="days_ago" min="0" max="30" value="0" required>
+  </p>
+
+  <p>
+    <label for="notes">Private Patient Notes (Encrypted & Secure):</label><br>
+    <textarea id="notes" name="notes" rows="4" placeholder="e.g., Full name, prescription, allergies, medical history... (Only visible to authorized staff)"></textarea>
+  </p>
+
   <button type="submit">Submit Report</button>
 </form>
+
 {% endblock %}
