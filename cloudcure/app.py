@@ -7,13 +7,25 @@ import os
 
 def create_app():
     app = Flask(__name__)
+    
+    # 🔑 Secret key (keep this secure in production)
     app.config['SECRET_KEY'] = 'cloudcure-secret-key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_monitor.db'
+    
+    # ☁️ Use cloud database if DATABASE_URL is set, otherwise fallback to SQLite (for testing)
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL:
+        # Fix Supabase's "postgres://" → SQLAlchemy requires "postgresql://"
+        if DATABASE_URL.startswith("postgres://"):
+            DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+    else:
+        # Local fallback (not used when deployed or when env var is set)
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///health_monitor.db'
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
     db.init_app(app)
-
-    # Initialize Flask-Login
+    
+    # 🔐 Flask-Login setup
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'login'
@@ -22,6 +34,7 @@ def create_app():
     def load_user(user_id):
         return HospitalUser.query.get(int(user_id))
 
+    # 🗃️ Create tables in the database (safe to run multiple times)
     with app.app_context():
         db.create_all()
 
@@ -38,7 +51,6 @@ def detect_outbreak(threshold=7):
     df = pd.DataFrame([{'location': r.location, 'disease': r.disease} for r in recent])
     location_counts = df['location'].value_counts()
     hotspots = location_counts[location_counts >= threshold].index.tolist()
-
     if hotspots:
         hotspot = hotspots[0]
         diseases = df[df['location'] == hotspot]['disease'].unique()
@@ -117,11 +129,9 @@ def report_case():
         dis = request.form.get('disease', '').strip()
         loc = request.form.get('location', '').strip()
         days = request.form.get('days_ago', '0').strip()
-
         if not (pid and dis and loc):
             flash("All fields are required!", "error")
             return render_template('report_form.html')
-
         try:
             add_disease_report(pid, dis, loc, days)
             flash(f"✅ Case of '{dis.title()}' reported in {loc}!", "success")
