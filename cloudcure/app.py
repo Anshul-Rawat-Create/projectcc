@@ -4,6 +4,7 @@ from models import db, HospitalUser, DiseaseReport
 from db_utils import add_disease_report, get_reports_grouped_by_location, get_recent_reports
 import pandas as pd
 import os
+from collections import defaultdict
 
 def create_app():
     app = Flask(__name__)
@@ -60,6 +61,20 @@ def detect_outbreak(threshold=7):
         }
     return {"status": "SAFE", "message": "No unusual activity detected."}
 
+
+INDIA_LOCATION_COORDS = {
+    "Ahmedabad-Ward5": (23.0225, 72.5714),
+    "Ahmedabad-Ward7": (23.0300, 72.5800),
+    "Mumbai-Dharavi": (19.0428, 72.8571),
+    "Chennai-TNagar": (13.0415, 80.2340),
+    "Kolkata-Howrah": (22.5958, 88.2820),
+    "Delhi-East": (28.6304, 77.3530),
+    "Bangalore-Central": (12.9716, 77.5946),
+    "Hyderabad-Begumpet": (17.4474, 78.4746),
+    "Pune-Kothrud": (18.5010, 73.7989),
+    "Jaipur-MalviyaNagar": (26.8565, 75.8138),
+}
+
 # === ROUTES ===
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -105,7 +120,24 @@ def logout():
 
 @app.route('/')
 def home():
-    return render_template('index.html', alert=detect_outbreak())
+    # Fetch all reports (or recent ones)
+    from db_utils import get_all_reports
+    reports = get_all_reports()
+
+    # Build map markers for known Indian locations
+    map_markers = []
+    for r in reports:
+        coords = INDIA_LOCATION_COORDS.get(r.location)
+        if coords:
+            map_markers.append({
+                "location": r.location,
+                "disease": r.disease.title(),
+                "patient_id": r.patient_id,
+                "lat": coords[0],
+                "lng": coords[1]
+            })
+
+    return render_template('index.html', alert=detect_outbreak(), map_markers=map_markers)
 
 @app.route('/dashboard')
 def dashboard():
