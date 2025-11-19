@@ -161,7 +161,6 @@ def dashboard():
     all_reports = DiseaseReport.query.all()  # For showing decrypted notes
     return render_template('dashboard.html', location_diseases=location_diseases, all_reports=all_reports, alert=detect_outbreak())
 
-# In app.py, inside /report route
 
 @app.route('/report', methods=['GET', 'POST'])
 @login_required
