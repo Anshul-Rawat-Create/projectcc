@@ -1,0 +1,3 @@
+$env:ENCRYPTION_KEY = "jtemMydfjedC9CbP6n2y0I2tHfy76eDv0O7l2-l7vK0="
+$env:DATABASE_URL = "postgresql://postgres:Q%2FZ%40Dt6GRAxt43Z@db.pgzankeqqeogzlttexwr.supabase.co:5432/postgres"
+$env:SECRET_KEY = "a-very-secure-flask-secret"

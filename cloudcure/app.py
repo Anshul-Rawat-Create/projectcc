@@ -120,22 +120,38 @@ def logout():
 
 @app.route('/')
 def home():
-    # Fetch all reports (or recent ones)
     from db_utils import get_all_reports
     reports = get_all_reports()
 
-    # Build map markers for known Indian locations
-    map_markers = []
+    # Aggregate by location
+    location_data = defaultdict(lambda: {
+        "lat": None,
+        "lng": None,
+        "diseases": set(),
+        "count": 0,
+        "patient_ids": []  # optional, for detailed view
+    })
+
     for r in reports:
         coords = INDIA_LOCATION_COORDS.get(r.location)
         if coords:
-            map_markers.append({
-                "location": r.location,
-                "disease": r.disease.title(),
-                "patient_id": r.patient_id,
-                "lat": coords[0],
-                "lng": coords[1]
-            })
+            loc = location_data[r.location]
+            loc["lat"], loc["lng"] = coords
+            loc["diseases"].add(r.disease.title())
+            loc["count"] += 1
+            loc["patient_ids"].append(r.patient_id)
+
+    # Convert to list of markers
+    map_markers = []
+    for loc_name, data in location_data.items():
+        map_markers.append({
+            "location": loc_name,
+            "disease_list": ", ".join(sorted(data["diseases"])),
+            "case_count": data["count"],
+            "lat": data["lat"],
+            "lng": data["lng"],
+            # Optionally include patient_ids if needed for popup
+        })
 
     return render_template('index.html', alert=detect_outbreak(), map_markers=map_markers)
 

@@ -26,7 +26,7 @@
 
 <h3>📋 All Case Reports (with Private Notes)</h3>
 <div class="report-list">
-  {% for report in all_reports %}
+  {% for report in current_user.reports %}
   <div>
     <strong>{{ report.disease.title() }}</strong> in {{ report.location }} ({{
     report.days_ago }} days ago) - Patient ID: {{ report.patient_id }} {% if
